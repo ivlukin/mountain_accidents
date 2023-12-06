@@ -17,11 +17,17 @@ def auth_client():
     return TelegramClient(username, api_id, api_hash, system_version="4.16.30-vxCUSTOM")
 
 
+def get_chat_to_forward():
+    config = configparser.ConfigParser()
+    config.read("config.ini")
+    return client.get_entity(config['Telegram']['chat_to_forward'])
+
+
 client = auth_client()
 client.start()
 
 ACCIDENT_KEYWORDS = KEYWORDS.split(",")
-CHAT_TO_FORWARD = client.get_entity('Ilyin_ad')
+CHAT_TO_FORWARD = get_chat_to_forward()
 
 
 async def dump_unread_messages(channel_id, unread_count):
