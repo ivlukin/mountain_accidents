@@ -5,8 +5,7 @@ from time import sleep
 from telethon import TelegramClient
 from telethon.tl.functions.messages import GetHistoryRequest
 
-from model.Config import TELEGRAM_CHANNELS, REQUEST_FREQUENCY, KEYWORDS
-from model.TelegramChannel import TelegramChannel
+from model.Config import REQUEST_FREQUENCY, KEYWORDS
 
 
 def auth_client():
@@ -19,29 +18,19 @@ def auth_client():
 
 
 client = auth_client()
-client.connect()
-if not client.is_user_authorized():
-    client.start()
+client.start()
 
 ACCIDENT_KEYWORDS = KEYWORDS.split(",")
 CHAT_TO_FORWARD = client.get_entity('Ilyin_ad')
 
 
-def init_channels():
-    channels = dict()
-    for channel_name in TELEGRAM_CHANNELS.split(','):
-        channel = TelegramChannel("t.me/" + channel_name, REQUEST_FREQUENCY)
-        channels[channel.url] = channel
-    return channels
-
-
-def dump_unread_messages(channel_id, unread_count):
+async def dump_unread_messages(channel_id, unread_count):
     limit_msg = unread_count  # максимальное число записей, передаваемых за один раз
     all_messages = []  # список всех сообщений
     total_count_limit = unread_count
     while True:
         history = client(GetHistoryRequest(
-            peer=client.get_entity(channel_id),
+            peer=await client.get_entity(channel_id),
             offset_id=0,
             offset_date=None, add_offset=0,
             limit=limit_msg, max_id=0, min_id=0,
@@ -57,7 +46,7 @@ def dump_unread_messages(channel_id, unread_count):
     return all_messages
 
 
-def get_unread_messages(dialogs):
+async def get_unread_messages(dialogs):
     print("scanning for unread messages...")
     new_messages = dict()
     for dialog in dialogs:
@@ -66,8 +55,8 @@ def get_unread_messages(dialogs):
             if unread_count > 0:
                 sleep(1)
                 channel_id = dialog.dialog.peer.channel_id
-                unread_messages = dump_unread_messages(channel_id, unread_count)
-                client.send_read_acknowledge(dialog)
+                unread_messages = await dump_unread_messages(channel_id, unread_count)
+                await client.send_read_acknowledge(dialog)
                 new_messages[dialog] = unread_messages
     return new_messages
 
@@ -87,9 +76,9 @@ def tokenize_message(message_text):
     return words
 
 
-def main():
-    dialogs = client.get_dialogs()
-    unread_messages_from_channel = get_unread_messages(dialogs)
+async def main():
+    dialogs = await client.get_dialogs()
+    unread_messages_from_channel = await get_unread_messages(dialogs)
     accident_messages = []
     print("searching for accidents...")
     for channel, messages in unread_messages_from_channel.items():
@@ -98,7 +87,7 @@ def main():
                 accident_messages.append(message)
     if len(accident_messages) > 0:
         print('Found', len(accident_messages), 'accidents, forwarding...')
-        client.forward_messages(CHAT_TO_FORWARD, accident_messages)
+        await client.forward_messages(CHAT_TO_FORWARD, accident_messages)
         print('successfully sent, waiting', REQUEST_FREQUENCY, 'seconds')
     else:
         print('no accidents, waiting', REQUEST_FREQUENCY, 'seconds')
@@ -106,7 +95,8 @@ def main():
 
 for i in range(30):
     print(datetime.datetime.now(), "going for scrape...")
-    main()
+    with client:
+        client.loop.run_until_complete(main())
     sleep(REQUEST_FREQUENCY)
 
 client.disconnect()
