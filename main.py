@@ -26,7 +26,7 @@ def get_chat_to_forward():
 client = auth_client()
 client.start()
 
-ACCIDENT_KEYWORDS = KEYWORDS.split(",")
+ACCIDENT_KEYWORDS = [kw.strip() for kw in KEYWORDS.split(",")]
 CHAT_TO_FORWARD = get_chat_to_forward()
 
 
@@ -35,7 +35,7 @@ async def dump_unread_messages(channel_id, unread_count):
     all_messages = []  # список всех сообщений
     total_count_limit = unread_count
     while True:
-        history = client(GetHistoryRequest(
+        history = await client(GetHistoryRequest(
             peer=await client.get_entity(channel_id),
             offset_id=0,
             offset_date=None, add_offset=0,
@@ -59,6 +59,7 @@ async def get_unread_messages(dialogs):
         if dialog.is_channel:
             unread_count = dialog.dialog.unread_count
             if unread_count > 0:
+                print(dialog.name, ':', unread_count, 'unread messages')
                 sleep(1)
                 channel_id = dialog.dialog.peer.channel_id
                 unread_messages = await dump_unread_messages(channel_id, unread_count)
@@ -78,7 +79,7 @@ def message_contain_accident(message):
 
 def tokenize_message(message_text):
     words = message_text.split()
-    words = [word.replace('\n', '').lower() for word in words]
+    words = [word.replace('\n', '').lower().strip() for word in words]
     return words
 
 
