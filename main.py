@@ -17,18 +17,16 @@ def auth_client():
     return TelegramClient(username, api_id, api_hash, system_version="4.16.30-vxCUSTOM")
 
 
-def get_chat_to_forward():
+async def get_chat_to_forward():
     config = configparser.ConfigParser()
     config.read("config.ini")
-    return client.get_entity(config['Telegram']['chat_to_forward'])
+    return await client.get_entity(config['Telegram']['chat_to_forward'])
 
 
 client = auth_client()
 client.start()
 
 ACCIDENT_KEYWORDS = [kw.strip() for kw in KEYWORDS.split(",")]
-CHAT_TO_FORWARD = get_chat_to_forward()
-
 
 async def dump_unread_messages(channel_id, unread_count):
     limit_msg = unread_count  # максимальное число записей, передаваемых за один раз
@@ -92,15 +90,19 @@ async def main():
         for message in messages:
             if message_contain_accident(message):
                 accident_messages.append(message)
+
     if len(accident_messages) > 0:
+        chat_to_forward = await get_chat_to_forward()
         print('Found', len(accident_messages), 'accidents, forwarding...')
-        await client.forward_messages(CHAT_TO_FORWARD, accident_messages)
+        for accident in accident_messages:
+            print("Accident:", accident.message)
+        await client.forward_messages(chat_to_forward, accident_messages)
         print('successfully sent, waiting', REQUEST_FREQUENCY, 'seconds')
     else:
         print('no accidents, waiting', REQUEST_FREQUENCY, 'seconds')
 
 
-for i in range(30):
+for i in range(96):
     print(datetime.datetime.now(), "going for scrape...")
     with client:
         client.loop.run_until_complete(main())
