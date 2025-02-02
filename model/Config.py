@@ -3,3 +3,5 @@ EXCLUDED_KEYWORDS = "Абрамс"
 PHRASES = "спасательная операция"
 EXCLUDED_PHRASES = "гора мусора, поклонная гора, военная операция"
 REQUEST_FREQUENCY = 60 * 5
+CACHE_SIZE = 1000
+ACCIDENT_THRESHOLD = 2

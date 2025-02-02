@@ -5,8 +5,9 @@ from time import sleep
 from telethon import TelegramClient
 from telethon.tl.functions.messages import GetHistoryRequest
 
-from model.Config import REQUEST_FREQUENCY, KEYWORDS
+from model.Config import REQUEST_FREQUENCY, KEYWORDS, CACHE_SIZE
 
+cache_messages = []
 
 def auth_client():
     config = configparser.ConfigParser()
@@ -27,6 +28,7 @@ client = auth_client()
 client.start()
 
 ACCIDENT_KEYWORDS = [kw.strip() for kw in KEYWORDS.split(",")]
+
 
 async def dump_unread_messages(channel_id, unread_count):
     limit_msg = unread_count  # максимальное число записей, передаваемых за один раз
@@ -88,7 +90,8 @@ async def main():
     print("searching for accidents...")
     for channel, messages in unread_messages_from_channel.items():
         for message in messages:
-            if message_contain_accident(message):
+            if message_contain_accident(message) and hash(message.message) not in cache_messages:
+                update_cache([message.message])
                 accident_messages.append(message)
 
     if len(accident_messages) > 0:
@@ -100,6 +103,13 @@ async def main():
         print('successfully sent, waiting', REQUEST_FREQUENCY, 'seconds')
     else:
         print('no accidents, waiting', REQUEST_FREQUENCY, 'seconds')
+
+
+def update_cache(messages):
+    cache_messages.append([hash(m.message) for m in messages])
+    if len(cache_messages) >= CACHE_SIZE:
+        print("reached cache limit, flushing...")
+        del cache_messages[: CACHE_SIZE // 2]
 
 
 for i in range(96):
