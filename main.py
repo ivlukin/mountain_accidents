@@ -5,7 +5,7 @@ from time import sleep
 from telethon import TelegramClient
 from telethon.tl.functions.messages import GetHistoryRequest
 
-from model.Config import REQUEST_FREQUENCY, KEYWORDS, CACHE_SIZE
+from Config.Config import REQUEST_FREQUENCY, KEYWORDS, CACHE_SIZE
 
 cache_messages = []
 

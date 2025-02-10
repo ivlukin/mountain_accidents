@@ -1,6 +1,6 @@
 # Функция для получения всех словоформ ключевого слова
-from model.Config import EXCLUDED_KEYWORDS
-from model.MessageTokenizer import morph
+from Config.Config import EXCLUDED_KEYWORDS
+from texts.MessageTokenizer import morph
 
 
 def get_word_forms(keyword):

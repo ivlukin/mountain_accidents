@@ -1,7 +1,7 @@
 from nltk import ngrams
 
-from model.Config import EXCLUDED_PHRASES
-from model.MessageTokenizer import normalize_word
+from Config.Config import EXCLUDED_PHRASES
+from texts.MessageTokenizer import normalize_word
 
 # Функция для поиска входных словосочетаний в тексте
 def find_input_phrases(filtered_words, input_phrases):
